@@ -29,7 +29,7 @@ private func > <T: Comparable>(lhs: T?, rhs: T?) -> Bool {
 }
 
 
-@objc public protocol CHTCollectionViewDelegateWaterfallLayout: UICollectionViewDelegate {
+@objc open protocol CHTCollectionViewDelegateWaterfallLayout: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView,
                         layout collectionViewLayout: UICollectionViewLayout,
                         sizeForItemAt indexPath: IndexPath) -> CGSize
