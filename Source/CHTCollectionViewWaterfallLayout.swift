@@ -29,7 +29,7 @@ private func > <T: Comparable>(lhs: T?, rhs: T?) -> Bool {
 }
 
 
-@objc open protocol CHTCollectionViewDelegateWaterfallLayout: UICollectionViewDelegate {
+@objc public protocol CHTCollectionViewDelegateWaterfallLayout: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView,
                         layout collectionViewLayout: UICollectionViewLayout,
                         sizeForItemAt indexPath: IndexPath) -> CGSize
@@ -110,7 +110,7 @@ extension CHTCollectionViewWaterfallLayout {
 public let CHTCollectionElementKindSectionHeader = "CHTCollectionElementKindSectionHeader"
 @available(*, unavailable, renamed: "UICollectionView.elementKindSectionFooter")
 public let CHTCollectionElementKindSectionFooter = "CHTCollectionElementKindSectionFooter"
-public class CHTCollectionViewWaterfallLayout: UICollectionViewLayout {
+open class CHTCollectionViewWaterfallLayout: UICollectionViewLayout {
     public var columnCount: Int = 2 {
         didSet {
             invalidateLayout()
