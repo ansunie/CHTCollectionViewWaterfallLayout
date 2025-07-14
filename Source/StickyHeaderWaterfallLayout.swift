@@ -7,9 +7,9 @@
 import UIKit
 import CHTCollectionViewWaterfallLayout
 
-open class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
+public class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
     
-    open override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
+    public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
         guard let superAttributes = super.layoutAttributesForElements(in: rect),
               let collectionView = self.collectionView else {
             return nil
@@ -56,7 +56,7 @@ open class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
         return newAttributes
     }
 
-    open override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
+    public override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
         return true
     }
 }
