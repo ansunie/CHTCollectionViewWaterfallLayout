@@ -16,7 +16,8 @@ let package = Package(
             name: "CHTCollectionViewWaterfallLayout",
             path: "Source",
             sources: [
-                "CHTCollectionViewWaterfallLayout.swift"
+                "CHTCollectionViewWaterfallLayout.swift", 
+                "StickyHeaderWaterfallLayout.swift"
             ]
         ),
         .target(
