@@ -110,7 +110,7 @@ extension CHTCollectionViewWaterfallLayout {
 public let CHTCollectionElementKindSectionHeader = "CHTCollectionElementKindSectionHeader"
 @available(*, unavailable, renamed: "UICollectionView.elementKindSectionFooter")
 public let CHTCollectionElementKindSectionFooter = "CHTCollectionElementKindSectionFooter"
-open class CHTCollectionViewWaterfallLayout: UICollectionViewLayout {
+public class CHTCollectionViewWaterfallLayout: UICollectionViewLayout {
     public var columnCount: Int = 2 {
         didSet {
             invalidateLayout()
