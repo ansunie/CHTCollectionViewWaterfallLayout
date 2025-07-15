@@ -53,7 +53,7 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
             let minHeaderY = sectionMinY - headerHeight
             newHeaderY = max(newHeaderY, minHeaderY)
             newHeaderY = min(newHeaderY, maxHeaderY)
-            print("newheady=\(newHeaderY,maxHeaderY,minHeaderY)")
+            print("newheady  =  \(newHeaderY,maxHeaderY,minHeaderY)")
             header.frame.origin.y = newHeaderY
             header.zIndex = 999
         }
