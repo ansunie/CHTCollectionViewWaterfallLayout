@@ -4,78 +4,64 @@
 //
 //  Created by ansunie on 2025/7/14.
 //
-import UIKit
-import CHTCollectionViewWaterfallLayout
-
 public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
-    /// Header 开始吸顶的触发偏移（相对于 collectionView contentOffset.y + inset.top）
-    public var pinStartOffset: CGFloat = 0 // 默认从顶部开始吸顶
-   
-   public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
-        guard let superAttributes = super.layoutAttributesForElements(in: rect),
-              let collectionView = collectionView else {
-            return nil
-        }
 
-          var newAttributes = superAttributes.map { $0.copy() as! UICollectionViewLayoutAttributes }
-      
-          // 获取所有 section header
-          let numberOfSections = collectionView.numberOfSections
-          for section in 0..<numberOfSections {
-              let indexPath = IndexPath(item: 0, section: section)
-              // 如果当前 header 不在列表中，手动补上
-              if !superAttributes.contains(where: { $0.indexPath.section == section && $0.representedElementKind == UICollectionView.elementKindSectionHeader }) {
-                  if let headerAttr = self.layoutAttributesForSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, at: indexPath).copy() as? UICollectionViewLayoutAttributes {
-                      newAttributes.append(headerAttr)
-                  }
-              }
-          }
+    public var pinStartOffset: CGFloat = 0
 
-        let contentOffsetY = collectionView.contentOffset.y + collectionView.adjustedContentInset.top
+    public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
+        guard
+            let superAttributes = super.layoutAttributesForElements(in: rect)?.map({ $0.copy() as! UICollectionViewLayoutAttributes }),
+            let collectionView = collectionView
+        else { return nil }
 
-        // 拷贝 attributes，避免冲突
-        for attr in superAttributes {
-            guard let copied = attr.copy() as? UICollectionViewLayoutAttributes else { continue }
-            newAttributes.append(copied)
-        }
+        var attrs = superAttributes
 
-        // 按 section 处理 header 吸顶逻辑
-        let headers = newAttributes.filter {
-            $0.representedElementKind == UICollectionView.elementKindSectionHeader
-        }
-
-        for header in headers {
-            let section = header.indexPath.section
-
-            guard let numberOfItems = collectionView.dataSource?.collectionView(collectionView, numberOfItemsInSection: section),
-                  numberOfItems > 0,
-                  let firstItemAttr = layoutAttributesForItem(at: IndexPath(item: 0, section: section))?.copy() as? UICollectionViewLayoutAttributes,
-                  let lastItemAttr = layoutAttributesForItem(at: IndexPath(item: numberOfItems - 1, section: section))?.copy() as? UICollectionViewLayoutAttributes
-            else {
-                continue
+        // 把不在可视区域里的 header 也补进来，避免闪烁
+        (0..<collectionView.numberOfSections).forEach { section in
+            let indexPath = IndexPath(item: 0, section: section)
+            if !attrs.contains(where: { $0.indexPath.section == section &&
+                                        $0.representedElementKind == UICollectionView.elementKindSectionHeader }),
+               let header = layoutAttributesForSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader,
+                                                                  at: indexPath)?
+                                .copy() as? UICollectionViewLayoutAttributes {
+                attrs.append(header)
             }
+        }
 
-            // 当前 section 范围
-            let sectionMinY = firstItemAttr.frame.minY
-            let sectionMaxY = lastItemAttr.frame.maxY + self.sectionInset.bottom
+        // 实际滚动位置（扣掉 contentInset.top）
+        let currentTop = collectionView.contentOffset.y + collectionView.adjustedContentInset.top
 
-            let headerHeight = header.frame.height
+        // 处理所有 header 的吸顶
+        for header in attrs where header.representedElementKind == UICollectionView.elementKindSectionHeader {
+            let section = header.indexPath.section
+            guard let itemCount = collectionView.dataSource?.collectionView(collectionView,
+                                                                            numberOfItemsInSection: section),
+                  itemCount > 0,
+                  let firstItem = layoutAttributesForItem(at: IndexPath(item: 0, section: section)),
+                  let lastItem  = layoutAttributesForItem(at: IndexPath(item: itemCount - 1, section: section))
+            else { continue }
 
-            let originalHeaderY = sectionMinY - headerHeight
-            let maxHeaderY = sectionMaxY - headerHeight
-            let triggerHeaderY = originalHeaderY - pinStartOffset
-            
-            let currentTop = contentOffsetY + collectionView.adjustedContentInset.top
-            var newHeaderY = max(currentTop, triggerHeaderY)
-            newHeaderY = min(newHeaderY, maxHeaderY)
-            header.frame.origin.y = newHeaderY
+            let headerH     = header.frame.height
+            let sectionMinY = firstItem.frame.minY
+            let sectionMaxY = lastItem.frame.maxY + sectionInset.bottom
+
+            // header 原始 Y、允许的最大 Y、触发吸顶的阈值
+            let originalY   = sectionMinY - headerH
+            let maxY        = sectionMaxY - headerH
+            let triggerY    = originalY - pinStartOffset   // 只有滚过 triggerY 才开始固定
+
+            // 计算 header 的新位置
+            var newY = max(currentTop, triggerY)
+            newY = min(newY, maxY)
+
+            header.frame.origin.y = newY
             header.zIndex = 999
         }
 
-        return newAttributes
+        return attrs
     }
 
-   public override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
-        return true
+    public override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
+        true
     }
 }
