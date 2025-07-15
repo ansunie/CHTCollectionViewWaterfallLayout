@@ -15,7 +15,19 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
             return nil
         }
 
-        var newAttributes: [UICollectionViewLayoutAttributes] = []
+    var allAttrs = superAttrs.map { $0.copy() as! UICollectionViewLayoutAttributes }
+
+    // 获取所有 section header
+    let numberOfSections = collectionView.numberOfSections
+    for section in 0..<numberOfSections {
+        let indexPath = IndexPath(item: 0, section: section)
+        // 如果当前 header 不在列表中，手动补上
+        if !allAttrs.contains(where: { $0.indexPath.section == section && $0.representedElementKind == UICollectionView.elementKindSectionHeader }) {
+            if let headerAttr = self.layoutAttributesForSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, at: indexPath)?.copy() as? UICollectionViewLayoutAttributes {
+                allAttrs.append(headerAttr)
+            }
+        }
+    }
 
         let contentOffsetY = collectionView.contentOffset.y + collectionView.adjustedContentInset.top
 
