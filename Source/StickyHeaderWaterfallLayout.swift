@@ -13,13 +13,13 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
 
     public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
         guard
-            let superAttributes = super.layoutAttributesForElements(in: rect)?.map({ $0.copy() as! UICollectionViewLayoutAttributes }),
+            let superAttrs = super.layoutAttributesForElements(in: rect)?.map { $0.copy() as! UICollectionViewLayoutAttributes },
             let collectionView = collectionView
         else { return nil }
 
-        var attrs = superAttributes
+        var attrs = superAttrs
 
-        // 把不在可视区域里的 header 也补进来，避免闪烁
+        // 把所有 header 都加进来，避免未渲染 section 出现闪烁
         (0..<collectionView.numberOfSections).forEach { section in
             let indexPath = IndexPath(item: 0, section: section)
             if !attrs.contains(where: { $0.indexPath.section == section &&
@@ -31,40 +31,31 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
             }
         }
 
-        // 实际滚动位置（扣掉 contentInset.top）
         let currentTop = collectionView.contentOffset.y + collectionView.adjustedContentInset.top
 
-        // 处理所有 header 的吸顶
-        for header in attrs where header.representedElementKind == UICollectionView.elementKindSectionHeader {
-            let section = header.indexPath.section
-            guard let itemCount = collectionView.dataSource?.collectionView(collectionView,
-                                                                            numberOfItemsInSection: section),
-                  itemCount > 0,
-                  let firstItem = layoutAttributesForItem(at: IndexPath(item: 0, section: section)),
-                  let lastItem  = layoutAttributesForItem(at: IndexPath(item: itemCount - 1, section: section))
-            else { continue }
+        // 排序后能轻松取到“下一个 header”
+        let headers = attrs
+            .filter { $0.representedElementKind == UICollectionView.elementKindSectionHeader }
+            .sorted { $0.indexPath.section < $1.indexPath.section }
 
-            let headerH     = header.frame.height
-            let sectionMinY = firstItem.frame.minY
-            let sectionMaxY = lastItem.frame.maxY + sectionInset.bottom
+        for (idx, header) in headers.enumerated() {
+            let originalY = header.frame.origin.y
+            let triggerY  = originalY - pinStartOffset      // 到达 trigger 才开始吸顶
 
-            // header 原始 Y、允许的最大 Y、触发吸顶的阈值
-            let originalY   = sectionMinY - headerH
-            let maxY        = sectionMaxY - headerH
-            let triggerY    = originalY - pinStartOffset   // 只有滚过 triggerY 才开始固定
+            // 计算可移动范围的上/下限
+            let minY = max(currentTop, triggerY)
 
-            // 计算 header 的新位置
-            var newY = max(currentTop, triggerY)
-            newY = min(newY, maxY)
+            let nextHeaderMinY = (idx + 1 < headers.count) ?
+                                 headers[idx + 1].frame.minY :
+                                 .greatestFiniteMagnitude
+            let maxY = nextHeaderMinY - header.frame.height
 
-            header.frame.origin.y = newY
+            header.frame.origin.y = min(minY, maxY)
             header.zIndex = 999
         }
 
         return attrs
     }
 
-    public override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
-        true
-    }
+    public override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool { true }
 }
