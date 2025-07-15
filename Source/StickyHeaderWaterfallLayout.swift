@@ -25,7 +25,7 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
             if !attrs.contains(where: { $0.indexPath.section == section &&
                                         $0.representedElementKind == UICollectionView.elementKindSectionHeader }),
                let header = layoutAttributesForSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader,
-                                                                  at: indexPath)?
+                                                                  at: indexPath)
                                 .copy() as? UICollectionViewLayoutAttributes {
                 attrs.append(header)
             }
