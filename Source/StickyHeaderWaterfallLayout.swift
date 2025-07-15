@@ -42,27 +42,28 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
                 let firstItem = layoutAttributesForItem(at: IndexPath(item: 0, section: section)),
                 let lastItem  = layoutAttributesForItem(at: IndexPath(item: itemCount - 1, section: section))
             else { continue }
-
+        
             let headerH      = header.frame.height
             let sectionMinY  = firstItem.frame.minY
             let sectionMaxY  = lastItem.frame.maxY + sectionInset.bottom
-
-            /// Header 在流式布局中的“自然”坐标
+        
+            // header 在“自然”位置（紧贴第一个 item 之上）
             let naturalY     = sectionMinY - headerH
-
-            /// ① 跟随滚动，保持贴紧 Item
-            let candidateY   = naturalY - scrollY         // 始终 sectionMinY - headerH - scrollY  → 间距 0
-
-            /// ② 吸顶位置
-            let stickY       = -pinStartOffset
-
-            /// 取更靠下（更大的）Y：未达阈值用 candidateY，达阈值后 stickY 生效
+        
+            // ① 跟随 item —— 这里直接用 naturalY
+            let candidateY   = naturalY
+        
+            // ② 吸顶位置
+            let stickY       = -pinStartOffset          // collectionView 内部坐标
+        
+            // 未达阈值用 candidateY，超过阈值后 stickY 生效
             let followOrStick = max(candidateY, stickY)
-
-            /// ③ 不超过本 section 尾部
+        
+            // ③ 不可超过本 section 尾部
             let maxY         = sectionMaxY - headerH
             header.frame.origin.y = min(followOrStick, maxY)
-            header.zIndex = 999
+        
+            header.zIndex = 1024        // 确保盖在 cell 之上
         }
 
         return attrs
