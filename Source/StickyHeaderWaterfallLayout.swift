@@ -40,22 +40,28 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
 
         for header in attributes where header.representedElementKind == UICollectionView.elementKindSectionHeader {
             let section = header.indexPath.section
-
+        
             guard let itemCount = collectionView.dataSource?.collectionView(collectionView, numberOfItemsInSection: section),
                   itemCount > 0,
                   let firstItem = layoutAttributesForItem(at: IndexPath(item: 0, section: section)),
                   let lastItem  = layoutAttributesForItem(at: IndexPath(item: itemCount - 1, section: section)) else {
                 continue
             }
-
+        
+            let sectionMinY = firstItem.frame.minY
             let sectionMaxY = lastItem.frame.maxY + sectionInset.bottom
             let headerHeight = header.frame.height
-
-            // ✅ 吸顶触发点是：header 被遮挡 pinStartOffset 后
-            let triggerY = header.frame.origin.y - pinStartOffset
+        
+            /// ✅ header 最初的 layout Y：在 section 内容之上
+            let originalY = sectionMinY - headerHeight
+        
+            /// ✅ 滚动到 header 被遮挡 pinStartOffset 时才吸顶
+            let triggerY = originalY + pinStartOffset
+        
+            let currentTop = collectionView.contentOffset.y + collectionView.adjustedContentInset.top
             let minY = max(currentTop, triggerY)
             let maxY = sectionMaxY - headerHeight
-
+        
             header.frame.origin.y = min(minY, maxY)
             header.zIndex = 999
         }
