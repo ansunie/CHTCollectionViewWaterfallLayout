@@ -61,12 +61,12 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
 
             let headerHeight = header.frame.height
 
-            /// ✅ 改这里：增加 pinStartOffset
-            let pinTop = contentOffsetY + pinStartOffset
-            // 限制吸顶范围不能超过当前 section
+            let originalHeaderY = sectionMinY - headerHeight
             let maxHeaderY = sectionMaxY - headerHeight
-            let minHeaderY = sectionMinY - headerHeight
-            var newHeaderY = max(pinTop, minHeaderY)
+            let triggerHeaderY = originalHeaderY - pinStartOffset
+            
+            let currentTop = contentOffsetY + collectionView.adjustedContentInset.top
+            var newHeaderY = max(currentTop, triggerHeaderY)
             newHeaderY = min(newHeaderY, maxHeaderY)
             print("newheady  =  \(newHeaderY) \(maxHeaderY) \(minHeaderY)")
             header.frame.origin.y = newHeaderY
