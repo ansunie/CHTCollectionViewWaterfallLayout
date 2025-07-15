@@ -68,7 +68,6 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
             let currentTop = contentOffsetY + collectionView.adjustedContentInset.top
             var newHeaderY = max(currentTop, triggerHeaderY)
             newHeaderY = min(newHeaderY, maxHeaderY)
-            print("newheady  =  \(newHeaderY) \(maxHeaderY) \(minHeaderY)")
             header.frame.origin.y = newHeaderY
             header.zIndex = 999
         }
