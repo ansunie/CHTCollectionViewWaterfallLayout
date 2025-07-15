@@ -9,8 +9,8 @@ import UIKit
 import CHTCollectionViewWaterfallLayout
 
 public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
-    
-    /// Header 被滚动多少点后开始吸顶
+
+    /// Header 吸顶触发偏移点（例如 400 表示滚动超过 400 pt 开始吸顶）
     public var pinStartOffset: CGFloat = 0
 
     public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
@@ -23,7 +23,7 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
 
         var attributes = superAttrs
 
-        // 确保 header 都加入
+        // 确保所有 header 都参与 layout
         for section in 0..<collectionView.numberOfSections {
             let indexPath = IndexPath(item: 0, section: section)
             if !attributes.contains(where: {
@@ -42,21 +42,31 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
 
             guard let itemCount = collectionView.dataSource?.collectionView(collectionView, numberOfItemsInSection: section),
                   itemCount > 0,
+                  let firstItem = layoutAttributesForItem(at: IndexPath(item: 0, section: section)),
                   let lastItem = layoutAttributesForItem(at: IndexPath(item: itemCount - 1, section: section))
-            else { continue }
-
-            let headerHeight = header.frame.height
-            let sectionMaxY = lastItem.frame.maxY + sectionInset.bottom
-            let maxY = sectionMaxY - headerHeight
-
-            let pinnedY: CGFloat
-            if scrollY < pinStartOffset {
-                pinnedY = -scrollY
-            } else {
-                pinnedY = -pinStartOffset
+            else {
+                continue
             }
 
-            header.frame.origin.y = min(pinnedY, maxY)
+            let sectionMaxY = lastItem.frame.maxY + sectionInset.bottom
+            let headerHeight = header.frame.height
+
+            // header 固定时的吸附位置
+            let stickY = -pinStartOffset
+
+            // 如果回弹状态，header 最低能下移到这里（item 顶部碰到 header 底部）
+            let maxHeaderY = firstItem.frame.minY - headerHeight
+
+            let newY: CGFloat
+            if scrollY >= pinStartOffset {
+                // 向上滚 → 吸顶（也限制不超出 section 尾部）
+                newY = min(max(stickY, maxHeaderY), sectionMaxY - headerHeight)
+            } else {
+                // 向下滚 → 跟随滚动
+                newY = -scrollY
+            }
+
+            header.frame.origin.y = newY
             header.zIndex = 999
         }
 
@@ -64,6 +74,6 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
     }
 
     public override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
-        true
+        return true
     }
 }
