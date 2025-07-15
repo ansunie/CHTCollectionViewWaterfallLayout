@@ -23,8 +23,8 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
               let indexPath = IndexPath(item: 0, section: section)
               // 如果当前 header 不在列表中，手动补上
               if !superAttributes.contains(where: { $0.indexPath.section == section && $0.representedElementKind == UICollectionView.elementKindSectionHeader }) {
-                  if let headerAttr = self.layoutAttributesForSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, at: indexPath)?.copy() as? UICollectionViewLayoutAttributes {
-                      superAttributes.append(headerAttr)
+                  if let headerAttr = self.layoutAttributesForSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, at: indexPath).copy() as? UICollectionViewLayoutAttributes {
+                      newAttributes.append(headerAttr)
                   }
               }
           }
