@@ -66,7 +66,7 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
             // 限制吸顶范围不能超过当前 section
             let maxHeaderY = sectionMaxY - headerHeight
             let minHeaderY = sectionMinY - headerHeight
-            newHeaderY = max(pinTop, minHeaderY)
+            var newHeaderY = max(pinTop, minHeaderY)
             newHeaderY = min(newHeaderY, maxHeaderY)
             print("newheady  =  \(newHeaderY) \(maxHeaderY) \(minHeaderY)")
             header.frame.origin.y = newHeaderY
