@@ -43,7 +43,7 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
 
             // 当前 section 范围
             let sectionMinY = firstItemAttr.frame.minY
-            let sectionMaxY = lastItemAttr.frame.maxY
+            let sectionMaxY = lastItemAttr.frame.maxY + self.sectionInset.bottom
 
             let headerHeight = header.frame.height
             var newHeaderY = contentOffsetY
