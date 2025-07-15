@@ -4,6 +4,9 @@
 //
 //  Created by ansunie on 2025/7/14.
 //
+import UIKit
+import CHTCollectionViewWaterfallLayout
+
 public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
 
     public var pinStartOffset: CGFloat = 0
