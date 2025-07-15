@@ -54,7 +54,7 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
             let candidateY   = naturalY
         
             // ② 吸顶位置
-            let stickY       = scrollY + pinStartOffset          // collectionView 内部坐标
+            let stickY       = scrollY - pinStartOffset          // collectionView 内部坐标
         
             // 未达阈值用 candidateY，超过阈值后 stickY 生效
             let followOrStick = max(candidateY, stickY)
