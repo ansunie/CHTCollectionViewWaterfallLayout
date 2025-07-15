@@ -4,58 +4,69 @@
 //
 //  Created by ansunie on 2025/7/14.
 //
+
 import UIKit
 import CHTCollectionViewWaterfallLayout
 
 public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
-
+    
+    /// Header 开始吸顶的偏移（相对于 contentOffsetY + adjustedContentInset.top）
     public var pinStartOffset: CGFloat = 0
-
+    
     public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
         guard
-            let superAttrs = super.layoutAttributesForElements(in: rect)?.map { $0.copy() as! UICollectionViewLayoutAttributes },
-            let collectionView = collectionView
-        else { return nil }
-
-        var attrs = superAttrs
-
-        // 把所有 header 都加进来，避免未渲染 section 出现闪烁
-        (0..<collectionView.numberOfSections).forEach { section in
+            let collectionView = collectionView,
+            let superAttributes = super.layoutAttributesForElements(in: rect)?.map({ $0.copy() as! UICollectionViewLayoutAttributes })
+        else {
+            return nil
+        }
+        
+        var attributes = superAttributes
+        
+        // 确保所有 header 都加入 attributes（避免某些 header 因不在 rect 内未参与吸顶计算）
+        for section in 0..<collectionView.numberOfSections {
             let indexPath = IndexPath(item: 0, section: section)
-            if !attrs.contains(where: { $0.indexPath.section == section &&
-                                        $0.representedElementKind == UICollectionView.elementKindSectionHeader }),
-               let header = layoutAttributesForSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader,
-                                                                  at: indexPath)
-                                .copy() as? UICollectionViewLayoutAttributes {
-                attrs.append(header)
+            let hasHeader = attributes.contains {
+                $0.indexPath.section == section && $0.representedElementKind == UICollectionView.elementKindSectionHeader
+            }
+            if !hasHeader,
+               let headerAttr = layoutAttributesForSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader,
+                                                                      at: indexPath).copy() as? UICollectionViewLayoutAttributes {
+                attributes.append(headerAttr)
             }
         }
-
+        
         let currentTop = collectionView.contentOffset.y + collectionView.adjustedContentInset.top
-
-        // 排序后能轻松取到“下一个 header”
-        let headers = attrs
-            .filter { $0.representedElementKind == UICollectionView.elementKindSectionHeader }
-            .sorted { $0.indexPath.section < $1.indexPath.section }
-
-        for (idx, header) in headers.enumerated() {
-            let originalY = header.frame.origin.y
-            let triggerY  = originalY - pinStartOffset      // 到达 trigger 才开始吸顶
-
-            // 计算可移动范围的上/下限
+        
+        // 遍历 header，处理吸顶逻辑
+        for header in attributes where header.representedElementKind == UICollectionView.elementKindSectionHeader {
+            let section = header.indexPath.section
+            
+            guard let numberOfItems = collectionView.dataSource?.collectionView(collectionView, numberOfItemsInSection: section),
+                  numberOfItems > 0,
+                  let firstItem = layoutAttributesForItem(at: IndexPath(item: 0, section: section)),
+                  let lastItem  = layoutAttributesForItem(at: IndexPath(item: numberOfItems - 1, section: section)) else {
+                continue
+            }
+            
+            let headerHeight = header.frame.height
+            let sectionMinY  = firstItem.frame.minY
+            let sectionMaxY  = lastItem.frame.maxY + sectionInset.bottom
+            
+            let originalY = sectionMinY - headerHeight
+            let triggerY  = originalY - pinStartOffset
+            
+            let maxY = sectionMaxY - headerHeight
             let minY = max(currentTop, triggerY)
-
-            let nextHeaderMinY = (idx + 1 < headers.count) ?
-                                 headers[idx + 1].frame.minY :
-                                 .greatestFiniteMagnitude
-            let maxY = nextHeaderMinY - header.frame.height
-
+            
             header.frame.origin.y = min(minY, maxY)
             header.zIndex = 999
         }
-
-        return attrs
+        
+        return attributes
     }
-
-    public override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool { true }
+    
+    public override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
+        return true
+    }
 }
