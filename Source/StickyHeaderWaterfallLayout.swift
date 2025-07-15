@@ -7,7 +7,7 @@
 import UIKit
 import CHTCollectionViewWaterfallLayout
 
-final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
+public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
 
     override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
         guard let superAttributes = super.layoutAttributesForElements(in: rect),
