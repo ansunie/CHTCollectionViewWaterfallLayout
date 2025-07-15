@@ -7,56 +7,61 @@
 import UIKit
 import CHTCollectionViewWaterfallLayout
 
-public class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
-    
-    public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
+final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
+
+    override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
         guard let superAttributes = super.layoutAttributesForElements(in: rect),
-              let collectionView = self.collectionView else {
+              let collectionView = collectionView else {
             return nil
         }
-        
-        var newAttributes = [UICollectionViewLayoutAttributes]()
-        var headers = [Int: UICollectionViewLayoutAttributes]()
-        var items = [UICollectionViewLayoutAttributes]()
-        
-        // 分类处理 item 和 header
+
+        var newAttributes: [UICollectionViewLayoutAttributes] = []
+
+        let contentOffsetY = collectionView.contentOffset.y + collectionView.adjustedContentInset.top
+
+        // 拷贝 attributes，避免冲突
         for attr in superAttributes {
-            if attr.representedElementKind == UICollectionView.elementKindSectionHeader {
-                headers[attr.indexPath.section] = attr.copy() as? UICollectionViewLayoutAttributes
-            } else {
-                items.append(attr.copy() as! UICollectionViewLayoutAttributes)
-            }
+            guard let copied = attr.copy() as? UICollectionViewLayoutAttributes else { continue }
+            newAttributes.append(copied)
         }
 
-        newAttributes.append(contentsOf: items)
+        // 按 section 处理 header 吸顶逻辑
+        let headers = newAttributes.filter {
+            $0.representedElementKind == UICollectionView.elementKindSectionHeader
+        }
 
-        // 遍历每个 section 的 header，处理其悬浮逻辑
-        for (section, headerAttr) in headers {
-            guard let firstItemAttr = layoutAttributesForItem(at: IndexPath(item: 0, section: section)) else { continue }
+        for header in headers {
+            let section = header.indexPath.section
 
-            let numberOfItems = collectionView.numberOfItems(inSection: section)
-            let lastItemIndex = max(0, numberOfItems - 1)
-            let lastItemAttr = layoutAttributesForItem(at: IndexPath(item: lastItemIndex, section: section))
-            
-            let contentOffsetY = collectionView.contentOffset.y + collectionView.adjustedContentInset.top
-            var frame = headerAttr.frame
-            let minY = firstItemAttr.frame.minY - frame.height
-            let maxY = (lastItemAttr?.frame.maxY ?? firstItemAttr.frame.maxY) - frame.height
+            guard let numberOfItems = collectionView.dataSource?.collectionView(collectionView, numberOfItemsInSection: section),
+                  numberOfItems > 0,
+                  let firstItemAttr = layoutAttributesForItem(at: IndexPath(item: 0, section: section))?.copy() as? UICollectionViewLayoutAttributes,
+                  let lastItemAttr = layoutAttributesForItem(at: IndexPath(item: numberOfItems - 1, section: section))?.copy() as? UICollectionViewLayoutAttributes
+            else {
+                continue
+            }
 
-            // 悬停逻辑
-            let adjustedY = max(minY, min(contentOffsetY, maxY))
-            frame.origin.y = adjustedY
+            // 当前 section 范围
+            let sectionMinY = firstItemAttr.frame.minY
+            let sectionMaxY = lastItemAttr.frame.maxY
 
-            headerAttr.frame = frame
-            headerAttr.zIndex = 1024
+            let headerHeight = header.frame.height
+            var newHeaderY = contentOffsetY
 
-            newAttributes.append(headerAttr)
+            // 限制吸顶范围不能超过当前 section
+            let maxHeaderY = sectionMaxY - headerHeight
+            let minHeaderY = sectionMinY - headerHeight
+            newHeaderY = max(newHeaderY, minHeaderY)
+            newHeaderY = min(newHeaderY, maxHeaderY)
+
+            header.frame.origin.y = newHeaderY
+            header.zIndex = 999
         }
 
         return newAttributes
     }
 
-    public override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
+    override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
         return true
     }
 }
