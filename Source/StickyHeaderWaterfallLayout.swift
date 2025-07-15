@@ -8,7 +8,9 @@ import UIKit
 import CHTCollectionViewWaterfallLayout
 
 public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
-
+    /// Header 开始吸顶的触发偏移（相对于 collectionView contentOffset.y + inset.top）
+    public var pinStartOffset: CGFloat = 0 // 默认从顶部开始吸顶
+   
    public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
         guard let superAttributes = super.layoutAttributesForElements(in: rect),
               let collectionView = collectionView else {
@@ -58,12 +60,13 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
             let sectionMaxY = lastItemAttr.frame.maxY + self.sectionInset.bottom
 
             let headerHeight = header.frame.height
-            var newHeaderY = contentOffsetY
 
+            /// ✅ 改这里：增加 pinStartOffset
+            let pinTop = contentOffsetY + pinStartOffset
             // 限制吸顶范围不能超过当前 section
             let maxHeaderY = sectionMaxY - headerHeight
             let minHeaderY = sectionMinY - headerHeight
-            newHeaderY = max(newHeaderY, minHeaderY)
+            newHeaderY = max(pinTop, minHeaderY)
             newHeaderY = min(newHeaderY, maxHeaderY)
             print("newheady  =  \(newHeaderY) \(maxHeaderY) \(minHeaderY)")
             header.frame.origin.y = newHeaderY
