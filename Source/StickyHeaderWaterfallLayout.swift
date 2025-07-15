@@ -10,9 +10,9 @@ import CHTCollectionViewWaterfallLayout
 
 public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout {
     
-    /// Header 开始吸顶的偏移（相对于 contentOffsetY + adjustedContentInset.top）
+    /// Header 被遮挡多少 pt 后开始吸顶，例如 400 表示 header 被遮 400 pt 后吸顶
     public var pinStartOffset: CGFloat = 0
-    
+
     public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
         guard
             let collectionView = collectionView,
@@ -20,10 +20,10 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
         else {
             return nil
         }
-        
+
         var attributes = superAttributes
-        
-        // 确保所有 header 都加入 attributes（避免某些 header 因不在 rect 内未参与吸顶计算）
+
+        // 确保所有 header 都参与 layout（避免因为不在 rect 而漏算）
         for section in 0..<collectionView.numberOfSections {
             let indexPath = IndexPath(item: 0, section: section)
             let hasHeader = attributes.contains {
@@ -35,37 +35,34 @@ public final class StickyHeaderWaterfallLayout: CHTCollectionViewWaterfallLayout
                 attributes.append(headerAttr)
             }
         }
-        
+
         let currentTop = collectionView.contentOffset.y + collectionView.adjustedContentInset.top
-        
-        // 遍历 header，处理吸顶逻辑
+
         for header in attributes where header.representedElementKind == UICollectionView.elementKindSectionHeader {
             let section = header.indexPath.section
-            
-            guard let numberOfItems = collectionView.dataSource?.collectionView(collectionView, numberOfItemsInSection: section),
-                  numberOfItems > 0,
+
+            guard let itemCount = collectionView.dataSource?.collectionView(collectionView, numberOfItemsInSection: section),
+                  itemCount > 0,
                   let firstItem = layoutAttributesForItem(at: IndexPath(item: 0, section: section)),
-                  let lastItem  = layoutAttributesForItem(at: IndexPath(item: numberOfItems - 1, section: section)) else {
+                  let lastItem  = layoutAttributesForItem(at: IndexPath(item: itemCount - 1, section: section)) else {
                 continue
             }
-            
+
+            let sectionMaxY = lastItem.frame.maxY + sectionInset.bottom
             let headerHeight = header.frame.height
-            let sectionMinY  = firstItem.frame.minY
-            let sectionMaxY  = lastItem.frame.maxY + sectionInset.bottom
-            
-            let originalY = sectionMinY - headerHeight
-            let triggerY  = originalY - pinStartOffset
-            
-            let maxY = sectionMaxY - headerHeight
+
+            // ✅ 吸顶触发点是：header 被遮挡 pinStartOffset 后
+            let triggerY = header.frame.origin.y - pinStartOffset
             let minY = max(currentTop, triggerY)
-            
+            let maxY = sectionMaxY - headerHeight
+
             header.frame.origin.y = min(minY, maxY)
             header.zIndex = 999
         }
-        
+
         return attributes
     }
-    
+
     public override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
         return true
     }
